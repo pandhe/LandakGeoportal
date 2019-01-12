@@ -5,9 +5,11 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PointF;
 import android.graphics.RectF;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -32,6 +34,7 @@ import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
+import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.CircleLayer;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.Layer;
@@ -95,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private CircleLayer pointsLayer,pointGedung;
     private boolean drawlinemode=false;
     private List<Point> routeCoordinates;
+    private FloatingActionButton fab;
+    private LocationComponent locationComponent;
 
 
     private CircleLayer cr;
@@ -122,6 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         BottomNavigationView navigation = findViewById(R.id.navigation);
         service_connector=new Service_Connector();
         routeCoordinates = new ArrayList<Point>();
+        fab=findViewById(R.id.fab);
         //Button button=findViewById(R.id.button);
        /* button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,6 +135,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 attachlayer();
             }
         });*/
+
+       fab.setOnClickListener(new View.OnClickListener() {
+           @Override
+           public void onClick(View view) {
+
+           }
+       });
 
 
         navigation.setOnNavigationItemSelectedListener(new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -263,9 +276,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
+        mapboxMap.setStyle(new Style.Builder().fromUrl("mapbox://styles/pandhe24/cjqtga9ls1mvo2smdt3rskq58"),
+                style -> enableLocationComponent());
         mapboxMap.addOnMapClickListener(new MapboxMap.OnMapClickListener() {
             @Override
-            public void onMapClick(@NonNull LatLng point) {
+            public boolean onMapClick(@NonNull LatLng point) {
                 PointF pointf = mapboxMap.getProjection().toScreenLocation(point);
                 RectF rectF = new RectF(pointf.x - 10, pointf.y - 10, pointf.x + 10, pointf.y + 10);
 
@@ -292,10 +307,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Source geoJsonSource = new GeoJsonSource("line-source"+String.valueOf(countline), featureCollection);
                     Log.i("ez",geoJsonSource.getAttribution());
                     Log.i("ez","wew");
-                    mapboxMap.addSource(geoJsonSource);
+                    mapboxMap.getStyle().addSource(geoJsonSource);
                     if(lineLayer!=null)
                     {
-                        mapboxMap.removeLayer("linelayer");
+                        mapboxMap.getStyle().removeLayer("linelayer");
                     }
                     lineLayer = new LineLayer("linelayer", "line-source"+String.valueOf(countline));
 // The layer properties for our line. This is where we make the line dotted, set the
@@ -307,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             PropertyFactory.lineWidth(5f),
                             PropertyFactory.lineColor(Color.parseColor("#e55e5e"))
                     );
-                    mapboxMap.addLayer(lineLayer);
+                    mapboxMap.getStyle().addLayer(lineLayer);
                 }
 
                             //marker.showInfoWindow(mapboxMap, mapView);
@@ -318,18 +333,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-
-
-            }
-        });
-
-        mapView.addOnMapChangedListener(new MapView.OnMapChangedListener() {
-            @Override
-            public void onMapChanged(int change) {
-
+return true;
 
             }
         });
+
+
 
 
         this.mapboxMap = mapboxMap;
@@ -388,19 +397,19 @@ public void showdetail(String js,LatLng point){
         Log.i("ez",String.valueOf(mark));
         switch (mark){
             case 0:
-                layer = mapboxMap.getLayer(geoJsonLayerId3);
+                layer = mapboxMap.getStyle().getLayer(geoJsonLayerId3);
                 break;
             case 1:
-                layer = mapboxMap.getLayer(geoJsonLayerId2);
+                layer = mapboxMap.getStyle().getLayer(geoJsonLayerId2);
                 break;
             case 2:
-                layer = mapboxMap.getLayer(geoJsonLayerId4);
+                layer = mapboxMap.getStyle().getLayer(geoJsonLayerId4);
                 break;
             case 3:
-                layer = mapboxMap.getLayer(geoJsonLayerId5);
+                layer = mapboxMap.getStyle().getLayer(geoJsonLayerId5);
                 break;
                 default:
-                    layer = mapboxMap.getLayer("museums");
+                    layer = mapboxMap.getStyle().getLayer("museums");
                     break;
         }
         if(layer!=null) {
@@ -423,14 +432,14 @@ public void showdetail(String js,LatLng point){
         if(ischk){
             try {
 // Load GeoJSONSource
-                Layer layer = mapboxMap.getLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer");
+                Layer layer = mapboxMap.getStyle().getLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer");
                 if (layer == null) {
-                    source = new GeoJsonSource(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx), new URL("http://landakkab.ina-sdi.or.id:8080/geoserver/"+arrayofmeta.get(idx).getPublisher_meta()+"/ows?service=WFS&version=1.0.0&request=GetFeature&typeName="+arrayofmeta.get(idx).getPublisher_meta()+":"+arrayofmeta.get(idx).getLink_meta()+"&maxFeatures=50000&outputFormat=application%2Fjson"));
+                    source = new GeoJsonSource(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx), new URL("http://sintangkab.ina-sdi.or.id:8080/geoserver/"+arrayofmeta.get(idx).getPublisher_meta()+"/ows?service=WFS&version=1.0.0&request=GetFeature&typeName="+arrayofmeta.get(idx).getPublisher_meta()+":"+arrayofmeta.get(idx).getLink_meta()+"&maxFeatures=50000&outputFormat=application%2Fjson"));
                     Random rnd = new Random();
                     int color = Color.argb(255, rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
                     //view.setBackgroundColor(color);
 // Add GeoJsonSource to map
-                    mapboxMap.addSource(source);
+                    mapboxMap.getStyle().addSource(source);
                     //source
                     if(arrayofmeta.get(idx).getLayer_Style().equals("polygon")||arrayofmeta.get(idx).getLayer_Style().equals("polyline")){
                         layer = new FillLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer", arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx));
@@ -438,7 +447,7 @@ public void showdetail(String js,LatLng point){
                                 fillOutlineColor(color),
                                 fillColor(Color.TRANSPARENT));
 
-                        mapboxMap.addLayer(layer);
+                        mapboxMap.getStyle().addLayer(layer);
                     }
                     else if (arrayofmeta.get(idx).getLayer_Style().equals("point")){
                         pointsLayer = new CircleLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer", arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx));
@@ -446,7 +455,7 @@ public void showdetail(String js,LatLng point){
                                 PropertyFactory.circleColor(color),
                                 PropertyFactory.circleRadius(10f));
                         pointsLayer.setFilter(eq(literal("$type"), literal("Point")));
-                        mapboxMap.addLayer(pointsLayer);
+                        mapboxMap.getStyle().addLayer(pointsLayer);
                     }
                     else if (arrayofmeta.get(idx).getLayer_Style().equals("line")){
                         layers=new LineLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer", arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx));
@@ -457,7 +466,7 @@ public void showdetail(String js,LatLng point){
                                 lineWidth(3f),
                                 lineColor(color));
 
-                        mapboxMap.addLayer(layers);
+                        mapboxMap.getStyle().addLayer(layers);
                     }
                 }
                 else{
@@ -483,7 +492,7 @@ public void showdetail(String js,LatLng point){
         }
         else{
 
-                Layer layer = mapboxMap.getLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer");
+                Layer layer = mapboxMap.getStyle().getLayer(arrayofmeta.get(idx).getLink_meta()+String.valueOf(idx)+"layer");
                 if (layer != null) {
                     if (VISIBLE.equals(layer.getVisibility().getValue())) {
                         layer.setProperties(visibility(NONE));
@@ -517,6 +526,7 @@ public void showdetail(String js,LatLng point){
                         String[] separated = urusan.getString("layer_nativename").split(":");
                         model_list_metadata mo=new model_list_metadata(false,urusan.getString("layer_name"),separated[0],separated[1],urusan.getString("layer_style"));
                         if(i==0){
+
                            // bdurusanterpilih=mo.id_urusan;
                         }
                         arrayofmeta.add(mo);
@@ -554,6 +564,7 @@ public void showdetail(String js,LatLng point){
                 break;
             case 1:
                 drawlinemode=false;
+
             enableLocationComponent();
                 break;
             case 2:
@@ -570,48 +581,60 @@ public void showdetail(String js,LatLng point){
         startActivity(intent);
 
     }
+    @SuppressWarnings( {"MissingPermission"})
     private void enableLocationComponent() {
 // Check if permissions are enabled and if not request
+
+
         if (PermissionsManager.areLocationPermissionsGranted(this)) {
 
             LocationComponentOptions options = LocationComponentOptions.builder(this)
                     .trackingGesturesManagement(true)
-                    .accuracyColor(ContextCompat.getColor(this, R.color.colorPrimaryDark))
+                    .accuracyColor(ContextCompat.getColor(this, R.color.colorAccent))
                     .build();
 
+            Toast.makeText(this, "iya yayaya", Toast.LENGTH_LONG).show();
+
 // Get an instance of the component
-            LocationComponent locationComponent = mapboxMap.getLocationComponent();
+            locationComponent = mapboxMap.getLocationComponent();
 
 // Activate with options
-            try {
-                locationComponent.activateLocationComponent(this, options);
-            }
-            catch (SecurityException se){
-
-            }
+            locationComponent.activateLocationComponent(this, mapboxMap.getStyle());
 
 // Enable to make component visible
             locationComponent.setLocationComponentEnabled(true);
+
+            Location lastLocation = locationComponent.getLastKnownLocation();
 
 // Set the component's camera mode
             locationComponent.setCameraMode(CameraMode.TRACKING);
             locationComponent.setRenderMode(RenderMode.COMPASS);
         } else {
-            permissionsManager = new PermissionsManager(MainActivity.this);
+            permissionsManager = new PermissionsManager(this);
             permissionsManager.requestLocationPermissions(this);
         }
     }
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        permissionsManager.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    @Override
+    public void onExplanationNeeded(List<String> permissionsToExplain) {
+        Toast.makeText(this, "weww", Toast.LENGTH_LONG).show();
+    }
+
     @Override
     public void onPermissionResult(boolean granted) {
         if (granted) {
             enableLocationComponent();
         } else {
-            //Toast.makeText(this, "lalalala", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "iya yayaya", Toast.LENGTH_LONG).show();
             finish();
         }
     }
-    @Override
-    public void onExplanationNeeded(List<String> permissionsToExplain) {
-        Toast.makeText(this, "zzz", Toast.LENGTH_LONG).show();
-    }
+
+
+
+
 }

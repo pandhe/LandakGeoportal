@@ -24,7 +24,7 @@
         mapbox:mapbox_cameraTargetLat="0.487953"
         mapbox:mapbox_cameraTargetLng="109.766085"
         mapbox:mapbox_cameraZoom="5"
-        mapbox:mapbox_styleUrl="mapbox://styles/mapbox/streets-v10" >
+         >
 
     </com.mapbox.mapboxsdk.maps.MapView>
 
@@ -39,6 +39,18 @@
         app:menu="@menu/navigation">
 
     </android.support.design.widget.BottomNavigationView>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:src="@drawable/ic_action_map"
+        app:layout_constraintBottom_toTopOf="@+id/navigation"
+        app:layout_constraintEnd_toEndOf="parent" />
 
 
 
